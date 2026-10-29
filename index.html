@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Escáner Escolar Pro</title>
-    <!-- Usamos una librería alternativa oficial muy ligera -->
-    <script src="https://unpkg.com"></script>
+    <!-- Cargamos la librería oficial desde su servidor principal -->
+    <script src="https://unpkg.com" type="text/javascript"></script>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -23,22 +23,12 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
         }
         h1 { color: #1a1a1a; font-size: 26px; }
-        .btn-principal {
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            padding: 15px 20px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-        }
+        p { color: #666; font-size: 14px; }
         #reader {
             width: 100%;
             border-radius: 12px;
             overflow: hidden;
-            margin-top: 15px;
+            background: #fafafa;
         }
         #resultado {
             margin-top: 20px;
@@ -48,6 +38,28 @@
             border-radius: 12px;
             font-weight: bold;
             word-break: break-all;
+            font-size: 16px;
+        }
+        /* Estilizamos los botones nativos que genera la librería automáticamente */
+        #reader button {
+            background-color: #1a73e8 !important;
+            color: white !important;
+            border: none !important;
+            padding: 12px 20px !important;
+            border-radius: 8px !important;
+            font-size: 15px !important;
+            font-weight: 600 !important;
+            margin: 10px auto !important;
+            cursor: pointer !important;
+            display: inline-block !important;
+            box-shadow: 0 4px 6px rgba(26,115,232,0.2);
+        }
+        #reader select {
+            padding: 10px !important;
+            border-radius: 8px !important;
+            border: 1px solid #ccc !important;
+            margin: 10px auto !important;
+            width: 90% !important;
         }
     </style>
 </head>
@@ -55,42 +67,37 @@
 
     <div class="container">
         <h1>📸 Escáner Escolar Pro</h1>
-        <p>Toca el botón para iniciar el escaneo</p>
+        <p>Usa el botón de abajo para activar la cámara o escanear un archivo</p>
         
-        <button class="btn-principal" id="btnIniciar" onclick="encenderCamara()">📷 Encender Cámara</button>
-        
+        <!-- El lector se genera de forma automática e inmediata aquí -->
         <div id="reader"></div>
         
-        <div id="resultado">Esperando acción...</div>
+        <div id="resultado">Esperando código...</div>
     </div>
 
     <script>
+        // Función que se activa cuando detecta un código QR o de barras
         function alEscanearExitoso(textoDecodificado) {
             document.getElementById('resultado').innerHTML = `
-                <div style="color: #0f5132; background-color: #d1e7dd; padding: 10px; border-radius: 8px;">
+                <div style="color: #0f5132; background-color: #d1e7dd; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
                     ¡Código detectado! 🎉
                 </div>
-                <p style="font-size: 18px; color: #212529;">${textoDecodificado}</p>
+                <div style="font-size: 18px; color: #212529;">${textoDecodificado}</div>
             `;
         }
 
-        function encenderCamara() {
-            document.getElementById('resultado').innerText = "Cargando cámara...";
-            
-            // Usamos el inicializador básico que es más compatible con navegadores móviles viejos y nuevos
-            let html5QrcodeScanner = new Html5QrcodeScanner(
-                "reader", 
-                { fps: 10, qrbox: { width: 250, height: 250 } }
-            );
-            
-            try {
-                html5QrcodeScanner.render(alEscanearExitoso);
-                document.getElementById('btnIniciar').style.display = 'none';
-                document.getElementById('resultado').innerText = "Apunta a un código";
-            } catch (error) {
-                document.getElementById('resultado').innerText = "Error: " + error;
-            }
-        }
+        // Inicialización automática y directa recomendada por la librería
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                rememberLastUsedCamera: true
+            },
+            /* verbose= */ false
+        );
+        
+        html5QrcodeScanner.render(alEscanearExitoso);
     </script>
 
 </body>
