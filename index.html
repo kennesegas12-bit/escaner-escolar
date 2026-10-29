@@ -47,19 +47,30 @@
     </div>
 
     <script>
-        function alEscanearExitoso(textoDecodificado, resultadoDecodificado) {
-            document.getElementById('resultado').innerHTML = `
-                <p style="color: green; margin: 0;">¡Código detectado! 🎉</p>
-                <p style="margin: 5px 0 0 0;">${textoDecodificado}</p>
-            `;
-        }
+        // Variable para controlar la cámara de forma avanzada
+const html5QrCode = new Html5Qrcode("reader");
 
-        let escanner = new Html5QrcodeScanner(
-            "reader", 
-            { fps: 10, qrbox: { width: 250, height: 250 } }
-        );
-        
-        escanner.render(alEscanearExitoso);
+// Configuración del tamaño del recuadro de escaneo
+const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+// Esta función se ejecuta si el escaneo es exitoso
+function alEscanearExitoso(textoDecodificado) {
+    document.getElementById('resultado').innerHTML = `
+        <p style="color: green; margin: 0;">¡Código detectado! 🎉</p>
+        <p style="margin: 5px 0 0 0;">${textoDecodificado}</p>
+    `;
+}
+
+// Forzamos al teléfono a usar la cámara trasera ('environment')
+html5QrCode.start(
+    { facingMode: "environment" }, 
+    config, 
+    alEscanearExitoso
+).catch((err) => {
+    // Si hay un error, lo mostramos en el cuadro azul para saber qué pasa
+    document.getElementById('resultado').innerText = "Error de cámara: " + err;
+});
+
     </script>
 
 </body>
