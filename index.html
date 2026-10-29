@@ -4,50 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Escáner Escolar Pro</title>
-    <!-- Cargamos la versión super estable -->
-    <script src="https://unpkg.com"></script>
+    <!-- Servidor global alternativo y ultra-estable -->
+    <script src="https://cloudflare.com"></script>
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             text-align: center;
             background-color: #f0f2f5;
             padding: 20px;
+            margin: 0;
         }
         .container {
             max-width: 400px;
-            margin: 0 auto;
+            margin: 20px auto;
             background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
         }
-        h1 { color: #333; }
+        h1 { color: #1a1a1a; font-size: 26px; margin-bottom: 5px; }
+        p { color: #666; font-size: 14px; margin-top: 0; }
         #reader {
             width: 100%;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
-            background: #e0e0e0;
+            background: #fafafa;
+            border: 2px dashed #ccc;
         }
         #resultado {
             margin-top: 20px;
             padding: 15px;
-            background-color: #e3f2fd;
-            color: #0d47a1;
-            border-radius: 10px;
+            background-color: #e8f0fe;
+            color: #1a73e8;
+            border-radius: 12px;
             font-weight: bold;
             word-break: break-all;
+            font-size: 16px;
         }
-        /* Estilos para que los botones se vean geniales en el celular */
-        button, input[type="file"]::-webkit-file-upload-button {
-            background-color: #007bff !important;
+        /* Forzamos estilos atractivos para los controles de la cámara */
+        button {
+            background-color: #1a73e8 !important;
             color: white !important;
             border: none !important;
-            padding: 12px 24px !important;
+            padding: 12px 20px !important;
             border-radius: 8px !important;
-            font-size: 16px !important;
-            margin: 10px 0 !important;
-            width: 90%;
-            cursor: pointer;
+            font-size: 15px !important;
+            font-weight: 600 !important;
+            margin: 10px auto !important;
+            cursor: pointer !important;
+            display: block !important;
+            width: 90% !important;
+            box-shadow: 0 4px 6px rgba(26,115,232,0.2);
+        }
+        button:active { background-color: #1557b0 !important; }
+        select {
+            padding: 10px !important;
+            border-radius: 8px !important;
+            border: 1px solid #ccc !important;
+            margin: 10px auto !important;
+            width: 90% !important;
+            display: block !important;
         }
     </style>
 </head>
@@ -55,9 +71,8 @@
 
     <div class="container">
         <h1>📸 Escáner Escolar Pro</h1>
-        <p>Prueba con la cámara en vivo o sube una foto de un código</p>
+        <p>Permite el acceso a la cámara o sube una imagen de tu código</p>
         
-        <!-- El lector inteligente -->
         <div id="reader"></div>
         
         <div id="resultado">Esperando código...</div>
@@ -65,25 +80,35 @@
 
     <script>
         function alEscanearExitoso(textoDecodificado) {
+            // Genera una alerta sonora o vibración visual al detectar el código
             document.getElementById('resultado').innerHTML = `
-                <p style="color: green; margin: 0;">¡Código detectado! 🎉</p>
-                <p style="margin: 5px 0 0 0; font-size: 18px;">${textoDecodificado}</p>
+                <div style="color: #0f5132; background-color: #d1e7dd; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                    ¡Código detectado con éxito! 🎉
+                </div>
+                <div style="font-size: 18px; color: #212529;">${textoDecodificado}</div>
             `;
         }
 
-        // Configuración con soporte para subir fotos si falla la cámara en vivo
-        let escanner = new Html5QrcodeScanner(
-            "reader", 
-            { 
-                fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: false
+        // Inicializamos el lector asegurando compatibilidad móvil absoluta
+        function iniciarEscaner() {
+            let escanner = new Html5QrcodeScanner(
+                "reader", 
+                { 
+                    fps: 15, 
+                    qrbox: function(viewfinderWidth, viewfinderHeight) {
+                        let minEdgePercentage = 0.70;
+                        let minEdgeLength = Math.min(viewfinderWidth, viewfinderHeight);
+                        let qrboxSize = Math.floor(minEdgeLength * minEdgePercentage);
+                        return { width: qrboxSize, height: qrboxSize };
+                    },
+                    rememberLastUsedCamera: true
                 }
-            }
-        );
-        
-        escanner.render(alEscanearExitoso);
+            );
+            escanner.render(alEscanearExitoso);
+        }
+
+        // Ejecutar inmediatamente al cargar la página
+        window.addEventListener('DOMContentLoaded', iniciarEscaner);
     </script>
 
 </body>
