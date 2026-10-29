@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Escáner Escolar</title>
+    <!-- Cargamos la versión estable de la librería -->
     <script src="https://unpkg.com"></script>
     <style>
         body {
@@ -25,6 +26,8 @@
             width: 100%;
             border-radius: 10px;
             overflow: hidden;
+            background: #e0e0e0;
+            min-height: 250px;
         }
         #resultado {
             margin-top: 20px;
@@ -35,42 +38,58 @@
             font-weight: bold;
             word-break: break-all;
         }
+        /* Estilo para los botones nativos que creará la librería */
+        button {
+            background-color: #007bff !important;
+            color: white !important;
+            border: none !important;
+            padding: 10px 20px !important;
+            border-radius: 8px !important;
+            font-size: 16px !important;
+            margin: 10px 0 !important;
+            cursor: pointer !important;
+        }
+        select {
+            padding: 8px !important;
+            border-radius: 5px !important;
+            margin-bottom: 10px !important;
+            width: 80% !important;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>📸 Escáner Escolar</h1>
-        <p>Apunta a un código QR o código de barras</p>
+        <p>Si la cámara no enciende sola, usa el botón de abajo</p>
+        
+        <!-- El contenedor donde se renderizará el escáner con controles manuales -->
         <div id="reader"></div>
+        
         <div id="resultado">Esperando código...</div>
     </div>
 
     <script>
-        // Variable para controlar la cámara de forma avanzada
-const html5QrCode = new Html5Qrcode("reader");
+        function alEscanearExitoso(textoDecodificado) {
+            document.getElementById('resultado').innerHTML = `
+                <p style="color: green; margin: 0;">¡Código detectado! 🎉</p>
+                <p style="margin: 5px 0 0 0;">${textoDecodificado}</p>
+            `;
+        }
 
-// Configuración del tamaño del recuadro de escaneo
-const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-// Esta función se ejecuta si el escaneo es exitoso
-function alEscanearExitoso(textoDecodificado) {
-    document.getElementById('resultado').innerHTML = `
-        <p style="color: green; margin: 0;">¡Código detectado! 🎉</p>
-        <p style="margin: 5px 0 0 0;">${textoDecodificado}</p>
-    `;
-}
-
-// Forzamos al teléfono a usar la cámara trasera ('environment')
-html5QrCode.start(
-    { facingMode: "environment" }, 
-    config, 
-    alEscanearExitoso
-).catch((err) => {
-    // Si hay un error, lo mostramos en el cuadro azul para saber qué pasa
-    document.getElementById('resultado').innerText = "Error de cámara: " + err;
-});
-
+        // Usamos el Scanner completo que incluye el menú de selección de cámara y botón de encendido manual
+        let escanner = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                rememberLastUsedCamera: true,
+                // Esto deshace el bug reciente de Chrome en Android
+                useBarCodeDetectorIfSupported: false 
+            }
+        );
+        
+        escanner.render(alEscanearExitoso);
     </script>
 
 </body>
