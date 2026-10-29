@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Escáner Escolar Pro</title>
-    <!-- Servidor global alternativo y ultra-estable -->
-    <script src="https://cloudflare.com"></script>
+    <!-- Cargamos la librería desde un servidor de respaldo ultra compatible -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             text-align: center;
             background-color: #f0f2f5;
             padding: 20px;
@@ -23,14 +23,34 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
         }
         h1 { color: #1a1a1a; font-size: 26px; margin-bottom: 5px; }
-        p { color: #666; font-size: 14px; margin-top: 0; }
+        p { color: #666; font-size: 14px; margin-bottom: 20px; }
+        
+        /* Botones grandes y fáciles de presionar en el celular */
+        .btn-principal {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 10px auto;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(26,115,232,0.2);
+        }
+        .btn-principal:active { background-color: #1557b0; }
+        
         #reader {
             width: 100%;
             border-radius: 12px;
             overflow: hidden;
             background: #fafafa;
-            border: 2px dashed #ccc;
+            display: none; /* Se oculta hasta que el usuario presione iniciar */
+            margin-top: 15px;
         }
+        
         #resultado {
             margin-top: 20px;
             padding: 15px;
@@ -41,74 +61,72 @@
             word-break: break-all;
             font-size: 16px;
         }
-        /* Forzamos estilos atractivos para los controles de la cámara */
-        button {
-            background-color: #1a73e8 !important;
-            color: white !important;
-            border: none !important;
-            padding: 12px 20px !important;
-            border-radius: 8px !important;
-            font-size: 15px !important;
-            font-weight: 600 !important;
-            margin: 10px auto !important;
-            cursor: pointer !important;
-            display: block !important;
-            width: 90% !important;
-            box-shadow: 0 4px 6px rgba(26,115,232,0.2);
-        }
-        button:active { background-color: #1557b0 !important; }
-        select {
-            padding: 10px !important;
-            border-radius: 8px !important;
-            border: 1px solid #ccc !important;
-            margin: 10px auto !important;
-            width: 90% !important;
-            display: block !important;
-        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>📸 Escáner Escolar Pro</h1>
-        <p>Permite el acceso a la cámara o sube una imagen de tu código</p>
+        <p>Toca el botón azul para activar el escáner en tu teléfono</p>
         
+        <!-- Botón manual visible para el usuario -->
+        <button class="btn-principal" id="btnIniciar" onclick="encenderCamara()">📷 Encender Cámara</button>
+        
+        <!-- Aquí se mostrará la cámara cuando el usuario presione el botón -->
         <div id="reader"></div>
         
-        <div id="resultado">Esperando código...</div>
+        <div id="resultado">Esperando acción...</div>
     </div>
 
     <script>
+        let html5QrcodeScanner = null;
+
         function alEscanearExitoso(textoDecodificado) {
-            // Genera una alerta sonora o vibración visual al detectar el código
+            // Detener el escáner para ahorrar batería una vez detectado
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
+                document.getElementById('reader').style.display = 'none';
+                document.getElementById('btnIniciar').style.display = 'block';
+            }
+            
             document.getElementById('resultado').innerHTML = `
                 <div style="color: #0f5132; background-color: #d1e7dd; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
                     ¡Código detectado con éxito! 🎉
                 </div>
-                <div style="font-size: 18px; color: #212529;">${textoDecodificado}</div>
+                <div style="font-size: 18px; color: #212529; word-break: break-all;">${textoDecodificado}</div>
             `;
         }
 
-        // Inicializamos el lector asegurando compatibilidad móvil absoluta
-        function iniciarEscaner() {
-            let escanner = new Html5QrcodeScanner(
-                "reader", 
-                { 
-                    fps: 15, 
-                    qrbox: function(viewfinderWidth, viewfinderHeight) {
-                        let minEdgePercentage = 0.70;
-                        let minEdgeLength = Math.min(viewfinderWidth, viewfinderHeight);
-                        let qrboxSize = Math.floor(minEdgeLength * minEdgePercentage);
-                        return { width: qrboxSize, height: qrboxSize };
-                    },
-                    rememberLastUsedCamera: true
-                }
-            );
-            escanner.render(alEscanearExitoso);
-        }
+        function encenderCamara() {
+            // Mostrar el contenedor de la cámara
+            document.getElementById('reader').style.display = 'block';
+            document.getElementById('btnIniciar').style.display = 'none';
+            document.getElementById('resultado').innerText = "Iniciando cámara trasera...";
 
-        // Ejecutar inmediatamente al cargar la página
-        window.addEventListener('DOMContentLoaded', iniciarEscaner);
+            // Configurar el escáner forzando el uso de la cámara trasera del celular
+            const html5QrCode = new Html5Qrcode("reader");
+            html5QrcodeScanner = html5QrCode;
+
+            html5QrCode.start(
+                { facingMode: "environment" }, // "environment" obliga a usar la cámara trasera
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                alEscanearExitoso
+            )
+            .then(() => {
+                document.getElementById('resultado').innerText = "Apunta al código QR o de barras";
+            })
+            .catch((err) => {
+                document.getElementById('resultado').innerHTML = `
+                    <span style="color: red;">Error al abrir cámara: ${err}</span>
+                    <br><br>
+                    <p>Asegúrate de haber dado permisos de cámara a tu navegador.</p>
+                `;
+                document.getElementById('btnIniciar').style.style.display = 'block';
+            });
+        }
     </script>
 
 </body>
