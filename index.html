@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Escáner Escolar</title>
-    <!-- Cargamos la versión estable de la librería -->
+    <title>Mi Escáner Escolar Pro</title>
+    <!-- Cargamos la versión super estable -->
     <script src="https://unpkg.com"></script>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             text-align: center;
             background-color: #f0f2f5;
             padding: 20px;
@@ -21,13 +21,12 @@
             border-radius: 15px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        h1 { color: #333; font-size: 24px; }
+        h1 { color: #333; }
         #reader {
             width: 100%;
             border-radius: 10px;
             overflow: hidden;
             background: #e0e0e0;
-            min-height: 250px;
         }
         #resultado {
             margin-top: 20px;
@@ -38,32 +37,27 @@
             font-weight: bold;
             word-break: break-all;
         }
-        /* Estilo para los botones nativos que creará la librería */
-        button {
+        /* Estilos para que los botones se vean geniales en el celular */
+        button, input[type="file"]::-webkit-file-upload-button {
             background-color: #007bff !important;
             color: white !important;
             border: none !important;
-            padding: 10px 20px !important;
+            padding: 12px 24px !important;
             border-radius: 8px !important;
             font-size: 16px !important;
             margin: 10px 0 !important;
-            cursor: pointer !important;
-        }
-        select {
-            padding: 8px !important;
-            border-radius: 5px !important;
-            margin-bottom: 10px !important;
-            width: 80% !important;
+            width: 90%;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>📸 Escáner Escolar</h1>
-        <p>Si la cámara no enciende sola, usa el botón de abajo</p>
+        <h1>📸 Escáner Escolar Pro</h1>
+        <p>Prueba con la cámara en vivo o sube una foto de un código</p>
         
-        <!-- El contenedor donde se renderizará el escáner con controles manuales -->
+        <!-- El lector inteligente -->
         <div id="reader"></div>
         
         <div id="resultado">Esperando código...</div>
@@ -73,19 +67,19 @@
         function alEscanearExitoso(textoDecodificado) {
             document.getElementById('resultado').innerHTML = `
                 <p style="color: green; margin: 0;">¡Código detectado! 🎉</p>
-                <p style="margin: 5px 0 0 0;">${textoDecodificado}</p>
+                <p style="margin: 5px 0 0 0; font-size: 18px;">${textoDecodificado}</p>
             `;
         }
 
-        // Usamos el Scanner completo que incluye el menú de selección de cámara y botón de encendido manual
+        // Configuración con soporte para subir fotos si falla la cámara en vivo
         let escanner = new Html5QrcodeScanner(
             "reader", 
             { 
                 fps: 10, 
                 qrbox: { width: 250, height: 250 },
-                rememberLastUsedCamera: true,
-                // Esto deshace el bug reciente de Chrome en Android
-                useBarCodeDetectorIfSupported: false 
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: false
+                }
             }
         );
         
