@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Escáner Escolar</title>
+    <script src="https://unpkg.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; font-size: 24px; }
+        #reader {
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        #resultado {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            border-radius: 10px;
+            font-weight: bold;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📸 Escáner Escolar</h1>
+        <p>Apunta a un código QR o código de barras</p>
+        <div id="reader"></div>
+        <div id="resultado">Esperando código...</div>
+    </div>
+
+    <script>
+        function alEscanearExitoso(textoDecodificado, resultadoDecodificado) {
+            document.getElementById('resultado').innerHTML = `
+                <p style="color: green; margin: 0;">¡Código detectado! 🎉</p>
+                <p style="margin: 5px 0 0 0;">${textoDecodificado}</p>
+            `;
+        }
+
+        let escanner = new Html5QrcodeScanner(
+            "reader", 
+            { fps: 10, qrbox: { width: 250, height: 250 } }
+        );
+        
+        escanner.render(alEscanearExitoso);
+    </script>
+
+</body>
+</html>
