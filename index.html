@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Escáner Escolar Pro</title>
-    <!-- Cargamos la librería oficial desde su servidor principal -->
-    <script src="https://unpkg.com" type="text/javascript"></script>
+    <title>Mi Escáner Escolar Nativo</title>
+    <!-- Usamos un servidor alternativo global ultra-compatible -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -24,14 +24,25 @@
         }
         h1 { color: #1a1a1a; font-size: 26px; }
         p { color: #666; font-size: 14px; }
-        #reader {
-            width: 100%;
+        
+        /* Estilo genial para el botón del celular */
+        .btn-escanear {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 16px 20px;
             border-radius: 12px;
-            overflow: hidden;
-            background: #fafafa;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(26,115,232,0.2);
+            transition: background 0.2s;
         }
+        .btn-escanear:active { background-color: #1557b0; }
+        
         #resultado {
-            margin-top: 20px;
+            margin-top: 25px;
             padding: 15px;
             background-color: #e8f0fe;
             color: #1a73e8;
@@ -40,64 +51,58 @@
             word-break: break-all;
             font-size: 16px;
         }
-        /* Estilizamos los botones nativos que genera la librería automáticamente */
-        #reader button {
-            background-color: #1a73e8 !important;
-            color: white !important;
-            border: none !important;
-            padding: 12px 20px !important;
-            border-radius: 8px !important;
-            font-size: 15px !important;
-            font-weight: 600 !important;
-            margin: 10px auto !important;
-            cursor: pointer !important;
-            display: inline-block !important;
-            box-shadow: 0 4px 6px rgba(26,115,232,0.2);
-        }
-        #reader select {
-            padding: 10px !important;
-            border-radius: 8px !important;
-            border: 1px solid #ccc !important;
-            margin: 10px auto !important;
-            width: 90% !important;
-        }
+        /* Ocultamos el lector por defecto para evitar pantallas congeladas */
+        #reader { display: none; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>📸 Escáner Escolar Pro</h1>
-        <p>Usa el botón de abajo para activar la cámara o escanear un archivo</p>
+        <p>Toca el botón, toma una foto al código (QR o Barras) y la app lo leerá al instante.</p>
         
-        <!-- El lector se genera de forma automática e inmediata aquí -->
+        <!-- Botón nativo que interactúa directamente con el sistema del teléfono -->
+        <button class="btn-escanear" onclick="document.getElementById('input-archivo').click();">
+            📷 Tomar Foto al Código
+        </button>
+        
+        <!-- Input oculto que despierta la cámara del celular -->
+        <input type="file" id="input-archivo" accept="image/*" capture="environment" style="display: none;">
+        
         <div id="reader"></div>
-        
-        <div id="resultado">Esperando código...</div>
+        <div id="resultado">Esperando fotografía del código...</div>
     </div>
 
     <script>
-        // Función que se activa cuando detecta un código QR o de barras
-        function alEscanearExitoso(textoDecodificado) {
-            document.getElementById('resultado').innerHTML = `
-                <div style="color: #0f5132; background-color: #d1e7dd; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                    ¡Código detectado! 🎉
-                </div>
-                <div style="font-size: 18px; color: #212529;">${textoDecodificado}</div>
-            `;
-        }
+        // Inicializamos el motor del escáner en modo archivo de fondo
+        const html5QrCode = new Html5Qrcode("reader");
+        const archivoInput = document.getElementById('input-archivo');
 
-        // Inicialización automática y directa recomendada por la librería
-        const html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { 
-                fps: 10, 
-                qrbox: { width: 250, height: 250 },
-                rememberLastUsedCamera: true
-            },
-            /* verbose= */ false
-        );
-        
-        html5QrcodeScanner.render(alEscanearExitoso);
+        archivoInput.addEventListener('change', e => {
+            if (e.target.files.length == 0) {
+                return;
+            }
+
+            const archivoImagen = e.target.files[0];
+            document.getElementById('resultado').innerText = "Procesando la imagen... ⏳";
+
+            // El motor analiza la foto tomada por el usuario
+            html5QrCode.scanFile(archivoImagen, true)
+                .then(textoDecodificado => {
+                    document.getElementById('resultado').innerHTML = `
+                        <div style="color: #0f5132; background-color: #d1e7dd; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                            ¡Código detectado con éxito! 🎉
+                        </div>
+                        <div style="font-size: 18px; color: #212529;">${textoDecodificado}</div>
+                    `;
+                })
+                .catch(err => {
+                    document.getElementById('resultado').innerHTML = `
+                        <span style="color: #721c24;">No se encontró ningún código claro. ❌</span>
+                        <br><small style="color: #666;">Intenta tomar la foto más de cerca, derecha y con buena luz.</small>
+                    `;
+                });
+        });
     </script>
 
 </body>
