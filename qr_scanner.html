@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>QR Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root { color-scheme: dark; --bg:#0b1120; --panel:#151e30; --muted:#9aa8bd; --accent:#42d3a5; --line:#29364b; }
+    * { box-sizing:border-box }
+    body { margin:0; min-height:100vh; padding:24px 16px; background:radial-gradient(circle at top,#1b2b43 0,#0b1120 48%); color:#f4f7fb; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+    main { width:min(100%,520px); margin:0 auto; }
+    header { text-align:center; margin:8px 0 22px; }
+    .logo { width:62px;height:62px;margin:0 auto 12px;border-radius:20px;background:#183b3b;display:grid;place-items:center;font-size:30px; }
+    h1 { font-size:27px; margin:0 0 6px; letter-spacing:-.6px; }
+    .sub { color:var(--muted);font-size:14px;margin:0; }
+    .panel { background:rgba(21,30,48,.94); border:1px solid var(--line); border-radius:22px; padding:17px; box-shadow:0 18px 50px #0004; }
+    #reader { width:100%; overflow:hidden; border-radius:15px; background:#080d17; min-height:220px; }
+    #reader video { border-radius:12px; object-fit:cover; }
+    #reader__scan_region { min-height:220px; }
+    #reader__dashboard { padding:10px!important; }
+    #reader__dashboard_section_csr button, #reader button { background:#26364c!important;color:#fff!important;border:1px solid #43536b!important;border-radius:10px!important;padding:9px 12px!important; }
+    #reader select { background:#111b2b!important;color:white!important;border:1px solid #43536b!important;border-radius:8px!important;padding:8px!important; }
+    .actions { display:flex;gap:10px;margin-top:14px; }
+    button { cursor:pointer;border:0;border-radius:12px;padding:13px 16px;font-size:15px;font-weight:700; }
+    button:disabled { opacity:.45;cursor:not-allowed; }
+    .primary { background:var(--accent);color:#06251d;flex:1; }
+    .secondary { background:#29374d;color:#f4f7fb; }
+    .status { display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin:13px 2px 0; }
+    .dot { width:8px;height:8px;border-radius:50%;background:#8794a8; }
+    .dot.live { background:var(--accent);box-shadow:0 0 0 4px #42d3a522; }
+    h2 { font-size:15px;margin:20px 0 10px; }
+    .result { display:none;background:#0d1727;border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:16px; }
+    .result.show { display:block; }
+    .result-label { color:var(--accent);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px; }
+    #resultText { overflow-wrap:anywhere;white-space:pre-wrap;margin:8px 0 12px;font-size:14px;line-height:1.5; }
+    .result-actions { display:flex;gap:8px;flex-wrap:wrap; }
+    .result-actions button { padding:10px 12px;font-size:13px; }
+    .manual { display:flex;gap:8px; }
+    input { min-width:0;flex:1;background:#0d1727;border:1px solid var(--line);border-radius:11px;padding:12px;color:#fff;font-size:14px; }
+    .history { display:grid;gap:8px; }
+    .history-item { display:flex;align-items:center;gap:10px;background:#0d1727;border:1px solid var(--line);border-radius:11px;padding:10px 12px; }
+    .history-item span { flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:#dce5f2; }
+    .history-item button { padding:7px 9px;font-size:12px; }
+    .empty { color:var(--muted);font-size:13px;padding:8px 2px; }
+    .note { color:var(--muted);font-size:12px;line-height:1.5;text-align:center;margin:16px 8px 0; }
+    #reader__status_span { color:#dce5f2!important; }
+    @media (max-width:380px) { body{padding:16px 10px}.panel{padding:12px}.actions{gap:7px}button{padding:12px 10px} }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="logo">▦</div>
+    <h1>QR Scanner</h1>
+    <p class="sub">Escanea códigos QR con la cámara de tu celular</p>
+  </header>
+
+  <section class="panel">
+    <div id="reader"></div>
+    <div class="actions">
+      <button id="startBtn" class="primary" onclick="startScanner()">Iniciar cámara</button>
+      <button id="stopBtn" class="secondary" onclick="stopScanner()" disabled>Detener</button>
+    </div>
+    <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">Cámara apagada</span></div>
+
+    <div id="resultBox" class="result" aria-live="polite">
+      <div class="result-label">Código detectado</div>
+      <div id="resultText"></div>
+      <div class="result-actions">
+        <button class="secondary" onclick="copyResult()">Copiar</button>
+        <button id="openBtn" class="primary" onclick="openResult()" style="display:none">Abrir enlace</button>
+      </div>
+    </div>
+
+    <h2>Ingresar código manualmente</h2>
+    <div class="manual">
+      <input id="manualInput" type="text" placeholder="Pega aquí el contenido del QR">
+      <button class="secondary" onclick="useManual()">Leer</button>
+    </div>
+  </section>
+
+  <section style="margin-top:20px">
+    <h2>Escaneos recientes</h2>
+    <div id="history" class="history"><div class="empty">Aún no has escaneado códigos.</div></div>
+  </section>
+  <p class="note">Por seguridad, revisa el destino antes de abrir un enlace. La cámara funciona cuando abres esta página mediante HTTPS o desde localhost y autorizas el permiso de cámara.</p>
+</main>
+
+<script>
+  let scanner = null;
+  let running = false;
+  let currentResult = "";
+  let historyItems = [];
+
+  function setStatus(text, live=false) {
+    document.getElementById("statusText").textContent = text;
+    document.getElementById("statusDot").classList.toggle("live", live);
+  }
+
+  async function startScanner() {
+    if (running) return;
+    if (!window.Html5Qrcode) {
+      setStatus("No se pudo cargar el lector. Verifica tu conexión a internet.");
+      return;
+    }
+    const startBtn = document.getElementById("startBtn");
+    startBtn.disabled = true;
+    setStatus("Solicitando acceso a la cámara…");
+    try {
+      if (!scanner) scanner = new Html5Qrcode("reader", { verbose: false });
+      const config = { fps: 12, qrbox: (w,h) => {
+        const size = Math.floor(Math.min(w,h) * 0.72);
+        return { width:size, height:size };
+      }, aspectRatio: 1.0 };
+      await scanner.start({ facingMode: "environment" }, config, onScanSuccess, () => {});
+      running = true;
+      document.getElementById("stopBtn").disabled = false;
+      setStatus("Cámara activa · apunta al código QR", true);
+    } catch (err) {
+      setStatus("No se pudo iniciar la cámara. Revisa los permisos o prueba otro navegador.");
+      startBtn.disabled = false;
+    }
+  }
+
+  async function stopScanner() {
+    if (!scanner || !running) return;
+    try {
+      await scanner.stop();
+      running = false;
+      document.getElementById("stopBtn").disabled = true;
+      document.getElementById("startBtn").disabled = false;
+      setStatus("Cámara apagada");
+    } catch (err) {
+      setStatus("No se pudo detener la cámara.");
+    }
+  }
+
+  function onScanSuccess(decodedText) {
+    if (decodedText === currentResult) return;
+    showResult(decodedText);
+    if (navigator.vibrate) navigator.vibrate(100);
+  }
+
+  function showResult(value) {
+    currentResult = value;
+    document.getElementById("resultText").textContent = value;
+    document.getElementById("resultBox").classList.add("show");
+    const isUrl = /^https?:\/\/\S+$/i.test(value.trim());
+    document.getElementById("openBtn").style.display = isUrl ? "inline-block" : "none";
+    if (!historyItems.includes(value)) {
+      historyItems.unshift(value);
+      historyItems = historyItems.slice(0, 8);
+      renderHistory();
+    }
+    setStatus("Código QR leído correctamente", running);
+  }
+
+  function copyResult() {
+    if (!currentResult) return;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(currentResult).then(() => setStatus("Contenido copiado", running))
+        .catch(() => fallbackCopy());
+    } else fallbackCopy();
+  }
+
+  function fallbackCopy() {
+    const area = document.createElement("textarea");
+    area.value = currentResult;
+    document.body.appendChild(area);
+    area.select();
+    try { document.execCommand("copy"); setStatus("Contenido copiado", running); }
+    catch(e) { setStatus("No se pudo copiar el contenido", running); }
+    area.remove();
+  }
+
+  function openResult() {
+    if (/^https?:\/\/\S+$/i.test(currentResult.trim())) {
+      window.open(currentResult.trim(), "_blank", "noopener,noreferrer");
+    }
+  }
+
+  function useManual() {
+    const value = document.getElementById("manualInput").value.trim();
+    if (value) {
+      showResult(value);
+      document.getElementById("manualInput").value = "";
+    }
+  }
+
+  function renderHistory() {
+    const container = document.getElementById("history");
+    container.replaceChildren();
+    if (!historyItems.length) {
+      container.innerHTML = '<div class="empty">Aún no has escaneado códigos.</div>';
+      return;
+    }
+    historyItems.forEach(value => {
+      const item = document.createElement("div");
+      item.className = "history-item";
+      const label = document.createElement("span");
+      label.textContent = value;
+      const button = document.createElement("button");
+      button.className = "secondary";
+      button.textContent = "Ver";
+      button.onclick = () => showResult(value);
+      item.append(label, button);
+      container.appendChild(item);
+    });
+  }
+</script>
+</body>
+</html>
